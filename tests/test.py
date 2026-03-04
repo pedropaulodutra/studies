@@ -1,17 +1,29 @@
+from pytest import mark
+
 from main import fahrenheit_to_celsius, celsius_to_fahrenheit
 
 
-# Fahrenheit to Celsius
-def test_should_return_0_when_receiving_32():
-    assert fahrenheit_to_celsius(32) == '0°C'
+@mark.f2c
+@mark.parametrize(
+    'fahrenheit, celsius',
+    [(32, '0°C'), (-40, '-40°C')]
+)
+def test_fahrenheit_to_celsius(fahrenheit, celsius):
+    assert fahrenheit_to_celsius(fahrenheit) == celsius
 
-def test_should_not_return_1_when_receiving_0():
-    assert fahrenheit_to_celsius(0) != '1°C'
+@mark.c2f
+@mark.parametrize(
+    'celsius, fahrenheit',
+    [(0, '32°F'), (-40, '-40°F')]
+)
+def test_celsius_to_fahrenheit(celsius, fahrenheit):
+    assert celsius_to_fahrenheit(celsius) == fahrenheit
 
-
-# Celsius to Fahrenheit
-def test_should_return_32_when_receiving_0():
-    assert celsius_to_fahrenheit(0) == '32°F'
-
-def test_should_not_return_0_when_receiving_1():
-    assert celsius_to_fahrenheit(1) != '0°F'
+@mark.xfail
+@mark.parametrize(
+    'fahrenheit, celsius',
+    [('a', '28°C'), ('81°F', 'b')]
+)
+def test_should_return_valueerror_when_receiving_a_string(fahrenheit, celsius):
+    assert fahrenheit_to_celsius(fahrenheit) == celsius
+    assert celsius_to_fahrenheit(celsius) == fahrenheit

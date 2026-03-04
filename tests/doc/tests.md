@@ -637,3 +637,197 @@ Basically, we have the three elements inside a single line. Taking our last test
 - And the full expression `assert celsius_to_fahrenheit(1) != '0°F'` would be the Assert.
 
 In computer science theory, the function `celsius_to_fahrenheit()` would be called the SUT (System Under Test).
+
+We've seen quite a lot so far, but there's still something that bothers me. There are two comments in the test code that don't really add any value, they only make it easier to identify where each test is.
+
+What if we could create some kind of marker so that, if we wanted to run tests separetely, we could do so, removing those comments and adding something actually functional instead?
+
+
+
+## Mark
+
+The marking feature can help us create "tags" our "groups" for specific tests. We can simplify commands or run tests for specific cases.
+
+```python
+from pytest import mark
+
+from main import fahrenheit_to_celsius, celsius_to_fahrenheit
+
+
+@mark.f2c
+def test_should_return_0_when_receiving_32():
+    assert fahrenheit_to_celsius(32) == '0°C'
+
+@mark.f2c
+def test_should_not_return_1_when_receiving_0():
+    assert fahrenheit_to_celsius(0) != '1°C'
+
+@mark.c2f
+def test_should_return_32_when_receiving_0():
+    assert celsius_to_fahrenheit(0) == '32°F'
+
+@mark.c2f
+def test_should_not_return_0_when_receiving_1():
+    assert celsius_to_fahrenheit(1) != '0°F'
+```
+
+You can see that I replaced the comments. Now we import `mark` from pytest and, before each test, we specify which group it belongs to. This way, when we run the execution command, only the chosen group will be tested. Shall we see this in action?
+
+```bash
+task test -m f2c
+```
+
+And then the terminal will return something huge...
+
+```bash
+==================== test session starts ====================
+platform linux -- Python 3.14.3, pytest-9.0.2, pluggy-1.6.0
+rootdir: /home/pedrodutra/Documents/python/tests
+configfile: pyproject.toml
+collected 4 items / 2 deselected / 2 selected               
+
+test.py ..                                            [100%]
+
+===================== warnings summary ======================
+test.py:6
+  /home/pedrodutra/Documents/python/tests/test.py:6: PytestUnknownMarkWarning: Unknown pytest.mark.f2c - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @mark.f2c
+
+test.py:10
+  /home/pedrodutra/Documents/python/tests/test.py:10: PytestUnknownMarkWarning: Unknown pytest.mark.f2c - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @mark.f2c
+
+test.py:14
+  /home/pedrodutra/Documents/python/tests/test.py:14: PytestUnknownMarkWarning: Unknown pytest.mark.c2f - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @mark.c2f
+
+test.py:18
+  /home/pedrodutra/Documents/python/tests/test.py:18: PytestUnknownMarkWarning: Unknown pytest.mark.c2f - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @mark.c2f
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======== 2 passed, 2 deselected, 4 warnings in 0.02s ========
+Wrote HTML report to htmlcov/index.html
+```
+
+Although intimidating, this message isn't really scary, it just tells us that our mark is not recognized. We need to document it in `pyproject.toml`.
+
+```toml
+[tool.pytest.ini_options]
+markers = [
+    'f2c: tests for Fahrenheit to Celsius conversion',
+    'c2f: tests for Celsius to Fahrenheit conversion'
+]
+```
+
+And then, if you run the same command again, the output will be:
+
+```bash
+==================== test session starts ====================
+platform linux -- Python 3.14.3, pytest-9.0.2, pluggy-1.6.0
+rootdir: /home/pedrodutra/Documents/python/tests
+configfile: pyproject.toml
+collected 4 items / 2 deselected / 2 selected               
+
+test.py ..                                            [100%]
+
+============== 2 passed, 2 deselected in 0.01s ==============
+Wrote HTML report to htmlcov/index.html
+```
+
+We can see that two tests passed and two were not selected.
+
+But well... if it said that our mark is not recognized, that means there **are recognized marks**. So, which ones are they?
+
+- **@mark.skip:** skips a test.
+- **@mark.skipif: **skips a test in a specific context.
+- **@mark.xfail:** this test is expected to fail in some context. 
+- **@mark.parametrize:** parametrizes tests.
+
+We won't cover them all here. If you're curious, feel free to look them up on Google.
+
+Do you remember the two tests we skipped? We can use these markers to handle them without a context manager for now:
+
+```python
+from pytest import mark
+
+from main import fahrenheit_to_celsius, celsius_to_fahrenheit
+
+
+@mark.f2c
+def test_should_return_0_when_receiving_32():
+    assert fahrenheit_to_celsius(32) == '0°C'
+
+@mark.f2c
+def test_should_not_return_1_when_receiving_0():
+    assert fahrenheit_to_celsius(0) != '1°C'
+
+@mark.f2c
+@mark.xfail
+def test_should_return_valueerror_when_receiving_a():
+    assert fahrenheit_to_celsius('a') == '100°C'
+
+@mark.c2f
+def test_should_return_32_when_receiving_0():
+    assert celsius_to_fahrenheit(0) == '32°F'
+
+@mark.c2f
+def test_should_not_return_0_when_receiving_1():
+    assert celsius_to_fahrenheit(1) != '0°F'
+
+@mark.c2f
+@mark.xfail
+def test_should_return_valueerror_when_receiving_b():
+    assert celsius_to_fahrenheit('b') == '100°F'
+```
+
+And then our output will be like this:
+
+```bash
+==================== test session starts ====================
+platform linux -- Python 3.14.3, pytest-9.0.2, pluggy-1.6.0
+rootdir: /home/pedrodutra/Documents/python/tests
+configfile: pyproject.toml
+collected 6 items                                           
+
+test.py ..x..x                                        [100%]
+
+=============== 4 passed, 2 xfailed in 0.04s ================
+Wrote HTML report to htmlcov/index.html
+```
+
+One thing we can notice is that our test file is getting huge just to test two functions. Shall we use `parametrize` to improve this?
+
+```python
+from pytest import mark
+
+from main import fahrenheit_to_celsius, celsius_to_fahrenheit
+
+
+@mark.f2c
+@mark.parametrize(
+    'fahrenheit, celsius',
+    [(32, '0°C'), (-40, '-40°C')]
+)
+def test_fahrenheit_to_celsius(fahrenheit, celsius):
+    assert fahrenheit_to_celsius(fahrenheit) == celsius
+
+@mark.c2f
+@mark.parametrize(
+    'celsius, fahrenheit',
+    [(0, '32°F'), (-40, '-40°F')]
+)
+def test_celsius_to_fahrenheit(celsius, fahrenheit):
+    assert celsius_to_fahrenheit(celsius) == fahrenheit
+
+@mark.xfail
+@mark.parametrize(
+    'fahrenheit, celsius',
+    [('a', '28°C'), ('81°F', 'b')]
+)
+def test_should_return_valueerror_when_receiving_a_string(fahrenheit, celsius):
+    assert fahrenheit_to_celsius(fahrenheit) == celsius
+    assert celsius_to_fahrenheit(celsius) == fahrenheit
+```
+
+This way, we can test multiple scenarios without having to create a function for each scenario.

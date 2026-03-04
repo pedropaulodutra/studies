@@ -24,3 +24,9 @@ dev = [
 [tool.taskipy.tasks]
 test = 'python -m coverage run -m pytest test.py'
 post_test = 'coverage html'
+
+[tool.pytest.ini_options]
+markers = [
+    'f2c: tests for Fahrenheit to Celsius conversion',
+    'c2f: tests for Celsius to Fahrenheit conversion'
+]
