@@ -2,10 +2,14 @@
 
 ## Summary
 
-1. How Does a Program Work?
-2. After all, What are Tests?
-3. Isolating Things.
-4. The Framework.
+1. [How Does a Program Work?](#how-does-a-program-work)
+2. [After all, What are Tests?](#after-all-what-are-tests)
+3. [Isolating Things.](#isolating-things)
+4. [The Framework.](#the-framework)
+5. [Pytest.](#pytest)
+6. [Testing With Pytest.](#testing-with-pytest)
+7. [Mark.](#mark)
+8. [Fixtures](#fixtures)
 
 
 
@@ -535,3 +539,101 @@ By clicking on the `main.py` file, you will see that everything not tested in th
 
 ![](images/print2.png)
 
+
+
+## Pytest
+
+Pytest is a Python testing framework. A more 'Pythonic' alternative to `unittest`, it is:
+
+- Simple;
+- Scalable;
+- Rich in Plugins;
+- Supports pypy;
+- First released in 2009;
+- Currently at version 9.0.2.
+
+Before continuing, I would like to explain that I changed the project to use Poetry, which is the tool I use in my daily work. If you prefer to continue with the conventional environment, that's fine, but I will explain what I did to introduce Poetry and the tools I use.
+
+The first thing I did was delete the `venv` folder, then run `poetry init -n` to create the `pyproject.toml`.
+
+Next, we add the libraries and frameworks we're going to use: coverage, pytest, and taskipy. We add them as follows:
+
+```bash
+poetry add --group dev coverage pytest taskipy
+```
+
+Next, we will configure taskipy in the `pyproject.toml`.
+
+```toml
+[tool.taskipy.tasks]
+test = 'python -m coverage run -m pytest test.py -vv'
+post_test = 'coverage html'
+```
+
+This way, we don't need to run that huge test command or generate the coverage separately. A single command will execute both, and that command is the following:
+
+- If you have the shell activated in your Poetry environment:
+
+  - ```bash
+    poetry shell
+    task test
+    ```
+
+- If you don't have the shell activated in Poetry:
+
+  - ```bash
+    poetry run task test
+    ```
+
+One nice thing is that pytest can run the tests we created for unittest, and we can already see how pytest displays the tests in the terminal:
+
+```bash
+==================== test session starts ====================
+platform linux -- Python 3.14.3, pytest-9.0.2, pluggy-1.6.0
+rootdir: /home/pedrodutra/Documents/python/tests
+configfile: pyproject.toml
+collected 6 items                                           
+
+test.py ......                                        [100%]
+
+===================== 6 passed in 0.02s =====================
+Wrote HTML report to htmlcov/index.html
+```
+
+
+
+## Testing With Pytest
+
+Okay, we’ve already managed to run our tests that were written for unittest in pytest, but how can we write tests specifically for pytest? The truth is that pytest will try to detect everything that starts with "test". By following this convention when naming classes, it reads them correctly, and that’s all we need. This way, we can simplify the tests, making them look like this:
+
+```python
+from main import fahrenheit_to_celsius, celsius_to_fahrenheit
+
+
+# Fahrenheit to Celsius
+def test_should_return_0_when_receiving_32():
+    assert fahrenheit_to_celsius(32) == '0°C'
+
+def test_should_not_return_1_when_receiving_0():
+    assert fahrenheit_to_celsius(0) != '1°C'
+
+
+# Celsius to Fahrenheit
+def test_should_return_32_when_receiving_0():
+    assert celsius_to_fahrenheit(0) == '32°F'
+
+def test_should_not_return_0_when_receiving_1():
+    assert celsius_to_fahrenheit(1) != '0°F'
+```
+
+Notice that we removed the error assertion; it’s a bit more complex and would require a context manager. We’ll come back to it later.
+
+If you have a good memory, you'll recall that at the beginning we talked about 3 steps test, or basically `AAA`. So let's take this opportunity to discuss where each part fits, because right now our tests are basically wrapped into a single line starting with `assert`. This is what is called in [Kent Beck](https://en-wikipedia-org.translate.goog/wiki/Kent_Beck?_x_tr_sl=en&_x_tr_tl=pt&_x_tr_hl=pt&_x_tr_pto=tc)'s book a One-Step Test.
+
+Basically, we have the three elements inside a single line. Taking our last test as an example, we can see that:
+
+- `celsius_to_fahrenheit(1)` can be considered the Arrange part.
+- `celsius_to_fahrenheit(1) != '0°F'` would be the Act part.
+- And the full expression `assert celsius_to_fahrenheit(1) != '0°F'` would be the Assert.
+
+In computer science theory, the function `celsius_to_fahrenheit()` would be called the SUT (System Under Test).

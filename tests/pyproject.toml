@@ -1,0 +1,26 @@
+[project]
+name = "tests"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Pedro Dutra",email = "pedro.dutra@muvz.ai"}
+]
+requires-python = ">=3.14,<4.0"
+dependencies = [
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "coverage (>=7.13.4,<8.0.0)",
+    "pytest (>=9.0.2,<10.0.0)",
+    "taskipy (>=1.14.1,<2.0.0)"
+]
+
+[tool.taskipy.tasks]
+test = 'python -m coverage run -m pytest test.py'
+post_test = 'coverage html'
