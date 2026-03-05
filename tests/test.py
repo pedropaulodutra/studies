@@ -1,4 +1,4 @@
-from pytest import mark
+from pytest import mark, raises
 
 from main import fahrenheit_to_celsius, celsius_to_fahrenheit
 
@@ -19,11 +19,13 @@ def test_fahrenheit_to_celsius(fahrenheit, celsius):
 def test_celsius_to_fahrenheit(celsius, fahrenheit):
     assert celsius_to_fahrenheit(celsius) == fahrenheit
 
-@mark.xfail
-@mark.parametrize(
-    'fahrenheit, celsius',
-    [('a', '28°C'), ('81°F', 'b')]
-)
-def test_should_return_valueerror_when_receiving_a_string(fahrenheit, celsius):
-    assert fahrenheit_to_celsius(fahrenheit) == celsius
-    assert celsius_to_fahrenheit(celsius) == fahrenheit
+
+@mark.f2c
+def test_f2c_should_retun_valueerror_when_receiving_string():
+    with raises(ValueError):
+        fahrenheit_to_celsius('a')
+
+@mark.c2f
+def test_c2f_should_return_valueerror_when_receiving_string():
+    with raises(ValueError):
+        celsius_to_fahrenheit('a')
