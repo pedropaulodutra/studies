@@ -831,3 +831,91 @@ def test_should_return_valueerror_when_receiving_a_string(fahrenheit, celsius):
 ```
 
 This way, we can test multiple scenarios without having to create a function for each scenario.
+
+But we have some bad practices here. `xfail` is intended for scenarios you don't control, like a feature that only works on Linux, you can parametrize it so that on Windows the `xfail` run. In our case, we need to ensure that the function returns a specific error when given an incorrect input.
+
+The second bad practice is having more than one assertion in a single test, if the first fails, the second won't run. So shall we address this?
+
+```python
+from pytest import mark, raises
+
+from main import fahrenheit_to_celsius, celsius_to_fahrenheit
+
+
+@mark.f2c
+@mark.parametrize(
+    'fahrenheit, celsius',
+    [(32, '0°C'), (-40, '-40°C')]
+)
+def test_fahrenheit_to_celsius(fahrenheit, celsius):
+    assert fahrenheit_to_celsius(fahrenheit) == celsius
+
+@mark.c2f
+@mark.parametrize(
+    'celsius, fahrenheit',
+    [(0, '32°F'), (-40, '-40°F')]
+)
+def test_celsius_to_fahrenheit(celsius, fahrenheit):
+    assert celsius_to_fahrenheit(celsius) == fahrenheit
+
+
+@mark.f2c
+def test_f2c_should_retun_valueerror_when_receiving_string():
+    with raises(ValueError):
+        fahrenheit_to_celsius('a')
+
+@mark.c2f
+def test_c2f_should_return_valueerror_when_receiving_string():
+    with raises(ValueError):
+        celsius_to_fahrenheit('a')
+```
+
+
+
+## Fixtures
+
+Fixtures are basically a way to "enter" a context, or to provide a tool that needs to be executed "before" the tests.
+
+Some authors, such as [Gerard Meszaros](http://xunitpatterns.com/gerardmeszaros.html), say that a test doesn't have three steps, but four. They call it the **4-Step Test**, where the stages are basically: **Setup, Exercise, Verify and TearDown**.
+
+The first three stages are essentially what we had already been working with, just under different names. However, TearDown is like saying, "Okay, you did it, now take it apart".
+
+A fixture works on the first and the last layer, providing a tangible context. Let's suppose you want to write a test to check whether a piece of data is being correctly inserted into your database. For that, in the Setup stage you insert the data into your table, then you run your test. But wouldn't you agree that since it's test data, it needs to be removed? For several reasons, you would pollute the database, or the next test might require a clean database, and so on.
+
+I know this may still feel a bit abstract, so let's work through it.
+
+Let's suppose that what defines the successful execution of a test is a `print` statement, it's less trivial than it seems. That's because we would need to "listen" to the system's standard output using `sys.stdout`.
+
+To do this, we would basically have to start "spying" on `stdout` before the test runs and during the test, in order to check whether the value was actually printed.
+
+
+
+### Which Fixtures do we Have Available?
+
+There are several fixtures that pytest provides out of the box.
+
+- **capsys and its variations:** "spy" on stdout.
+- **tmpdir**: creates a temporary directory.
+- **caplog:** "spies" on logs.
+- **monkeypatch:** adds attributes and methods to abjects at runtime.
+
+And there are several other fixtures that come with the default pytest installation that you can discover by running `pytest --fixtures` in your terminal.
+
+Besides using the built-in fixtures, we can also create our own fixtures. We'll explore this topic in more depth a bit later, but just for informational purposes, you would create a fixture like this:
+
+```
+from pytest import fixture
+
+from app import create_app
+
+
+@fixture
+def flask_app():
+	return create_app()
+
+def test_with_app(flask_app):
+	...
+```
+
+And this way, for example, you could make your Flask application run in order to test the endpoints.
+
